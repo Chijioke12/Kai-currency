@@ -1,0 +1,636 @@
+<!DOCTYPE html><html lang="en"><head><meta name="x-poe-datastore-behavior" content="local_only"><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter - KaiOS</title>
+    <style>
+        /* KaiOS Compatible CSS - Basic only */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            font-size: 14px;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* Header */
+        .header {
+            background-color: #5D5CDE;
+            padding: 8px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Content */
+        .content {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .converter-form {
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 12px;
+            color: #ccc;
+        }
+
+        .nav-item {
+            background-color: #333;
+            border: 1px solid #555;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .nav-item.focused {
+            background-color: #5D5CDE;
+            border-color: #5D5CDE;
+            color: #fff;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 8px;
+            background-color: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        .input-field.focused {
+            border-color: #5D5CDE;
+            background-color: #333;
+        }
+
+        .result-area {
+            background-color: #1a1a1a;
+            border: 1px solid #555;
+            border-radius: 3px;
+            padding: 15px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .result-value {
+            font-size: 18px;
+            color: #5D5CDE;
+            font-weight: bold;
+        }
+
+        .currency-list {
+            max-height: 120px;
+            overflow-y: auto;
+            border: 1px solid #555;
+            background-color: #222;
+        }
+
+        .currency-option {
+            padding: 8px;
+            border-bottom: 1px solid #555;
+        }
+
+        .currency-option.focused {
+            background-color: #5D5CDE;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #222;
+            padding: 5px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            border-top: 1px solid #555;
+        }
+
+        .soft-key {
+            flex: 1;
+            text-align: center;
+            padding: 3px;
+        }
+
+        .soft-key.left {
+            text-align: left;
+        }
+
+        .soft-key.right {
+            text-align: right;
+        }
+
+        /* Loading state */
+        .loading {
+            color: #5D5CDE;
+            text-align: center;
+            padding: 10px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-dialog {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 15px;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .modal-message {
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .modal-button {
+            padding: 8px 16px;
+            background-color: #222;
+            border: 1px solid #555;
+            border-radius: 3px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .modal-button.focused {
+            background-color: #5D5CDE;
+            border-color: #5D5CDE;
+        }
+
+        /* Error state */
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+<script src="https://puc.poecdn.net/authenticated_preview_page/syncedState.3f7572448765332f3047.js"></script></head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            Currency Converter
+        </div>
+
+        <!-- Content -->
+        <div class="content" id="mainContent">
+            <div class="converter-form">
+                <div class="form-group">
+                    <label class="form-label">Amount:</label>
+                    <div class="nav-item" id="amountInput" tabindex="0">
+                        <input type="number" class="input-field" id="amount" value="1" min="0" step="0.01">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">From Currency:</label>
+                    <div class="nav-item" id="fromCurrency" tabindex="1">
+                        <span id="fromCurrencyText">USD - US Dollar</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">To Currency:</label>
+                    <div class="nav-item" id="toCurrency" tabindex="2">
+                        <span id="toCurrencyText">EUR - Euro</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="nav-item" id="convertButton" tabindex="3">
+                        Convert Currency
+                    </div>
+                </div>
+
+                <div class="result-area" id="resultArea">
+                    <div class="result-value" id="resultValue">Enter amount to convert</div>
+                    <div id="exchangeRate"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer with Soft Keys -->
+        <div class="footer">
+            <div class="soft-key left" id="softLeft">Options</div>
+            <div class="soft-key" id="softCenter">Select</div>
+            <div class="soft-key right" id="softRight">Menu</div>
+        </div>
+    </div>
+
+    <!-- Modal Dialog -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-message" id="modalMessage">Select currency</div>
+            <div class="currency-list" id="currencyList">
+                <!-- Currency options will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // KaiOS Compatible JavaScript - ES5 only
+        var currentFocusIndex = 0;
+        var totalItems = 4;
+        var modalOpen = false;
+        var isSelectingCurrency = false;
+        var currencySelectType = ''; // 'from' or 'to'
+        var modalFocusIndex = 0;
+        var exchangeRates = {};
+        var isLoading = false;
+
+        // Currency data
+        var currencies = [
+            { code: 'USD', name: 'US Dollar' },
+            { code: 'EUR', name: 'Euro' },
+            { code: 'GBP', name: 'British Pound' },
+            { code: 'JPY', name: 'Japanese Yen' },
+            { code: 'CNY', name: 'Chinese Yuan' },
+            { code: 'AUD', name: 'Australian Dollar' },
+            { code: 'CAD', name: 'Canadian Dollar' },
+            { code: 'CHF', name: 'Swiss Franc' },
+            { code: 'INR', name: 'Indian Rupee' },
+            { code: 'KRW', name: 'South Korean Won' }
+        ];
+
+        var selectedFromCurrency = 'USD';
+        var selectedToCurrency = 'EUR';
+
+        // API base URL - replace with your Vercel deployment URL
+        var API_BASE_URL = 'https://your-currency-api.vercel.app';
+
+        // Initialize focus
+        function initializeFocus() {
+            var items = document.querySelectorAll('.nav-item');
+            for (var i = 0; i < items.length; i++) {
+                items[i].classList.remove('focused');
+            }
+            if (items[currentFocusIndex]) {
+                items[currentFocusIndex].classList.add('focused');
+            }
+            updateSoftKeys();
+        }
+
+        // Handle D-pad navigation
+        function handleDpadNavigation(key) {
+            if (modalOpen) {
+                return handleModalNavigation(key);
+            }
+
+            var oldIndex = currentFocusIndex;
+            
+            switch(key) {
+                case 'ArrowUp':
+                    if (currentFocusIndex > 0) {
+                        currentFocusIndex--;
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (currentFocusIndex < totalItems - 1) {
+                        currentFocusIndex++;
+                    }
+                    break;
+                case 'Enter':
+                    handleSelection();
+                    return;
+            }
+            
+            if (oldIndex !== currentFocusIndex) {
+                var items = document.querySelectorAll('.nav-item');
+                items[oldIndex].classList.remove('focused');
+                items[currentFocusIndex].classList.add('focused');
+                updateSoftKeys();
+            }
+        }
+
+        // Handle selection
+        function handleSelection() {
+            if (isLoading) return;
+
+            switch(currentFocusIndex) {
+                case 0: // Amount input
+                    focusAmountInput();
+                    break;
+                case 1: // From currency
+                    openCurrencySelector('from');
+                    break;
+                case 2: // To currency
+                    openCurrencySelector('to');
+                    break;
+                case 3: // Convert button
+                    performConversion();
+                    break;
+            }
+        }
+
+        // Focus amount input
+        function focusAmountInput() {
+            var amountInput = document.getElementById('amount');
+            amountInput.focus();
+            amountInput.select();
+        }
+
+        // Open currency selector
+        function openCurrencySelector(type) {
+            currencySelectType = type;
+            isSelectingCurrency = true;
+            modalOpen = true;
+            modalFocusIndex = 0;
+            
+            var modalMessage = document.getElementById('modalMessage');
+            modalMessage.textContent = 'Select ' + (type === 'from' ? 'from' : 'to') + ' currency:';
+            
+            populateCurrencyList();
+            document.getElementById('customModal').style.display = 'block';
+            updateCurrencyFocus();
+            updateSoftKeys();
+        }
+
+        // Populate currency list
+        function populateCurrencyList() {
+            var currencyList = document.getElementById('currencyList');
+            currencyList.innerHTML = '';
+            
+            for (var i = 0; i < currencies.length; i++) {
+                var option = document.createElement('div');
+                option.className = 'currency-option';
+                option.textContent = currencies[i].code + ' - ' + currencies[i].name;
+                option.setAttribute('data-index', i);
+                currencyList.appendChild(option);
+            }
+        }
+
+        // Update currency focus
+        function updateCurrencyFocus() {
+            var options = document.querySelectorAll('.currency-option');
+            for (var i = 0; i < options.length; i++) {
+                options[i].classList.remove('focused');
+            }
+            if (options[modalFocusIndex]) {
+                options[modalFocusIndex].classList.add('focused');
+                options[modalFocusIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        // Handle modal navigation
+        function handleModalNavigation(key) {
+            if (!isSelectingCurrency) return;
+
+            switch(key) {
+                case 'ArrowUp':
+                    if (modalFocusIndex > 0) {
+                        modalFocusIndex--;
+                        updateCurrencyFocus();
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (modalFocusIndex < currencies.length - 1) {
+                        modalFocusIndex++;
+                        updateCurrencyFocus();
+                    }
+                    break;
+                case 'Enter':
+                    selectCurrency();
+                    break;
+            }
+        }
+
+        // Select currency
+        function selectCurrency() {
+            var selectedCurrency = currencies[modalFocusIndex];
+            
+            if (currencySelectType === 'from') {
+                selectedFromCurrency = selectedCurrency.code;
+                document.getElementById('fromCurrencyText').textContent = 
+                    selectedCurrency.code + ' - ' + selectedCurrency.name;
+            } else {
+                selectedToCurrency = selectedCurrency.code;
+                document.getElementById('toCurrencyText').textContent = 
+                    selectedCurrency.code + ' - ' + selectedCurrency.name;
+            }
+            
+            closeModal();
+        }
+
+        // Close modal
+        function closeModal() {
+            modalOpen = false;
+            isSelectingCurrency = false;
+            document.getElementById('customModal').style.display = 'none';
+            updateSoftKeys();
+        }
+
+        // Perform conversion
+        function performConversion() {
+            if (isLoading) return;
+            
+            var amount = parseFloat(document.getElementById('amount').value);
+            if (isNaN(amount) || amount <= 0) {
+                showError('Please enter a valid amount');
+                return;
+            }
+
+            setLoading(true);
+            
+            // Fetch exchange rates
+            fetch(API_BASE_URL + '/api/rates?base=' + selectedFromCurrency)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (data.error) {
+                        showError(data.error);
+                        return;
+                    }
+                    
+                    exchangeRates = data.rates;
+                    var rate = exchangeRates[selectedToCurrency];
+                    
+                    if (!rate) {
+                        showError('Exchange rate not available');
+                        return;
+                    }
+                    
+                    var convertedAmount = amount * rate;
+                    displayResult(amount, selectedFromCurrency, convertedAmount, selectedToCurrency, rate);
+                })
+                .catch(function(error) {
+                    showError('Failed to fetch exchange rates');
+                })
+                .finally(function() {
+                    setLoading(false);
+                });
+        }
+
+        // Display result
+        function displayResult(amount, fromCurrency, convertedAmount, toCurrency, rate) {
+            var resultValue = document.getElementById('resultValue');
+            var exchangeRateText = document.getElementById('exchangeRate');
+            
+            resultValue.textContent = amount + ' ' + fromCurrency + ' = ' + 
+                convertedAmount.toFixed(2) + ' ' + toCurrency;
+            exchangeRateText.textContent = '1 ' + fromCurrency + ' = ' + rate.toFixed(4) + ' ' + toCurrency;
+        }
+
+        // Show error
+        function showError(message) {
+            var resultValue = document.getElementById('resultValue');
+            resultValue.textContent = 'Error: ' + message;
+            resultValue.className = 'result-value error';
+            
+            setTimeout(function() {
+                resultValue.className = 'result-value';
+                resultValue.textContent = 'Enter amount to convert';
+            }, 3000);
+        }
+
+        // Set loading state
+        function setLoading(loading) {
+            isLoading = loading;
+            var resultValue = document.getElementById('resultValue');
+            
+            if (loading) {
+                resultValue.textContent = 'Converting...';
+                resultValue.className = 'result-value loading';
+            } else {
+                resultValue.className = 'result-value';
+            }
+        }
+
+        // Update soft keys
+        function updateSoftKeys() {
+            var softLeft = document.getElementById('softLeft');
+            var softCenter = document.getElementById('softCenter');
+            var softRight = document.getElementById('softRight');
+            
+            if (modalOpen) {
+                softLeft.textContent = 'Cancel';
+                softCenter.textContent = 'Select';
+                softRight.textContent = '';
+            } else {
+                softLeft.textContent = 'Exit';
+                softCenter.textContent = 'Select';
+                softRight.textContent = 'Refresh';
+            }
+        }
+
+        // Handle soft keys
+        function handleSoftKeys(key) {
+            switch(key) {
+                case 'SoftLeft':
+                    if (modalOpen) {
+                        closeModal();
+                    } else {
+                        // Exit app or go back
+                        showExitConfirmation();
+                    }
+                    break;
+                case 'SoftRight':
+                    if (!modalOpen) {
+                        // Refresh rates
+                        performConversion();
+                    }
+                    break;
+            }
+        }
+
+        // Show exit confirmation
+        function showExitConfirmation() {
+            // Custom confirmation since alert/confirm not supported
+            var resultValue = document.getElementById('resultValue');
+            resultValue.textContent = 'Press * to exit app';
+            
+            setTimeout(function() {
+                resultValue.textContent = 'Enter amount to convert';
+            }, 2000);
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', function(event) {
+            event.preventDefault();
+            
+            var key = event.key;
+            
+            // Handle soft keys
+            if (key === 'SoftLeft' || key === 'SoftRight') {
+                handleSoftKeys(key);
+                return;
+            }
+            
+            // Handle D-pad navigation
+            if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight' || key === 'Enter') {
+                handleDpadNavigation(key);
+                return;
+            }
+            
+            // Handle back key
+            if (key === 'Backspace' && modalOpen) {
+                closeModal();
+                return;
+            }
+            
+            // Handle exit
+            if (key === '*') {
+                window.close();
+            }
+        });
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFocus();
+            
+            // Set default result
+            var resultValue = document.getElementById('resultValue');
+            resultValue.textContent = 'Enter amount to convert';
+        });
+
+        // Handle amount input blur
+        document.getElementById('amount').addEventListener('blur', function() {
+            // Return focus to navigation
+            var items = document.querySelectorAll('.nav-item');
+            items[currentFocusIndex].focus();
+        });
+    </script>
+
+
+</body></html>
