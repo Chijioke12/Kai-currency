@@ -1,0 +1,15 @@
+{
+  "name": "kaios-currency-converter-api",
+  "version": "1.0.0",
+  "description": "Currency converter API for KaiOS app",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "engines": {
+    "node": ">=14.x"
+  }
+}
